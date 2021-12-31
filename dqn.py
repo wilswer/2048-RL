@@ -25,9 +25,9 @@ class DeepQNetwork(nn.Module):
         #  convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
         #  linear_input_size = convw * convh * 32
         #  self.head = nn.Linear(linear_input_size, self.n_actions)
-        self.fc1 = nn.Linear(*self.input_dims, 256)
-        self.fc2 = nn.Linear(256, 256)
-        self.fc3 = nn.Linear(256, self.n_actions)
+        self.fc1 = nn.Linear(*self.input_dims, 1024)
+        self.fc2 = nn.Linear(1024, 1024)
+        self.fc3 = nn.Linear(1024, self.n_actions)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
         self.loss = nn.MSELoss()
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
@@ -62,6 +62,8 @@ class Agent():
         self.mem_cntr = 0
 
         self.Q_eval = DeepQNetwork(self.lr, self.input_dims, n_actions)
+        self.Q_eval_target = DeepQNetwork(self.lr, self.input_dims, n_actions)
+        self.Q_eval_target.load_state_dict(self.Q_eval.state_dict())
 
         self.state_memory = np.zeros(
             (self.mem_size, *input_dims), dtype=np.float32
@@ -122,7 +124,7 @@ class Agent():
         action_batch = self.action_memory[batch]
 
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
-        q_next = self.Q_eval.forward(new_state_batch)
+        q_next = self.Q_eval_target.forward(new_state_batch)
         q_next[terminal_batch] = 0.0
 
         q_target = reward_batch + self.gamma * T.max(q_next, dim=1)[0]
