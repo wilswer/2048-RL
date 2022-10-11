@@ -19,7 +19,7 @@ def main():
         eps_end=0.05,
     )
     agent.Q_eval_target.load_state_dict(
-        T.load('./saved_models/dqn_0_games')
+        T.load('./saved_models/dqn_29000_games')
     )
     agent.Q_eval_target.eval()
 
